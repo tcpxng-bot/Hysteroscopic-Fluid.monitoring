@@ -97,10 +97,14 @@
     50%{box-shadow:0 0 0 12px #cc1f3a00}
   }
   @media print{
-    #topbar,#tabs,.tab,#input-section,.btn-print,.btn-excel,.no-print{display:none!important}
-    body{background:#fff;color:#111}
-    #print-area{display:block!important}
-    .card{border:1px solid #ccc;background:#fff}
+    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+    #topbar,#tabs,.tab,#input-section,.btn-print,.btn-excel,.no-print,
+    #trend-card,#remaining-card,#cp-history .card-actions,
+    button:not(#print-area button){display:none!important}
+    body{background:#fff!important;color:#111;margin:0;padding:0}
+    #main{display:none!important}
+    #print-area{display:block!important;margin:0;padding:0}
+    @page{size:A4 portrait;margin:10mm 13mm}
   }
   #print-area{display:none}
 
@@ -241,7 +245,7 @@
       <!-- Remaining allowable + hard stop -->
       <div id="remaining-card" style="background:#132435;border:1px solid #1e3a52;border-radius:11px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:14px">
         <div style="flex:1">
-          <div style="font-size:9px;color:#5a7a90;font-weight:600;letter-spacing:.08em;margin-bottom:4px">REMAINING ALLOWABLE DEFICIT</div>
+          <div style="font-size:9px;color:#5a7a90;font-weight:700;letter-spacing:.12em;margin-bottom:4px">⏱ REMAINING ALLOWABLE DEFICIT</div>
           <div id="s-remaining" style="font-size:24px;font-weight:800;color:#00a86b">2,500 mL</div>
           <div style="font-size:9px;color:#5a7a90;margin-top:2px">ก่อนถึง Hard Stop (2,500 mL)</div>
         </div>
@@ -517,6 +521,16 @@ function toggleManual(){
   document.getElementById('manual-mode').style.display = isManualMode?'block':'none';
   document.getElementById('manual-toggle-btn').textContent = isManualMode?'⚡ One-Tap':'✏️ กรอกเอง';
   document.getElementById('manual-toggle-btn').style.color = isManualMode?'#1a9fe8':'#5a7a90';
+}
+
+function showCpFlash(){
+  const el = document.getElementById('cp-flash');
+  el.style.display = 'block';
+  el.style.opacity = '1';
+  setTimeout(()=>{
+    el.style.opacity = '0';
+    setTimeout(()=>{ el.style.display='none'; el.style.opacity='1'; }, 300);
+  }, 1800);
 }
 
 // ── SOUND + VISUAL ALERT ───────────────────────────────────
@@ -873,7 +887,7 @@ function updatePreview(){
 
 // ── END / RESET ────────────────────────────────────────────
 function confirmEnd(){
-  showModal('จบเคสและบันทึกลงประวัติ?', ()=>{ saveToHistory(); resetCase(); showTab('history'); });
+  showModal('จบเคสและบันทึกลงประวัติ?', ()=>{ saveToHistory(); resetCase(); });
 }
 
 function saveToHistory(){
