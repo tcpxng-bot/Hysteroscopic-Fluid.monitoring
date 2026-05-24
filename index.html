@@ -996,6 +996,7 @@ function renderHistory(){
           <span class="badge" style="color:${al.color};background:${al.color}20">${al.label}</span>
           <button class="btn btn-gray" style="padding:5px 9px;font-size:10px" onclick='viewCase(${c.id})'>ดู</button>
           <button class="btn btn-excel" style="padding:5px 9px;font-size:10px" onclick='exportSingleExcel(${c.id})'>Excel</button>
+          <button class="btn btn-print" style="padding:5px 9px;font-size:10px" onclick='printFromHistory(${c.id})'>🖨 ปริ้น</button>
         </div>
       `;
       section.appendChild(row);
@@ -1099,6 +1100,103 @@ function exportSingleExcel(id){
   XLSX.writeFile(wb,`Hystero_${c.patient.hn}_${c.patient.date}.xlsx`);
 }
 
+
+// ── PRINT FROM HISTORY ─────────────────────────────────────
+function printFromHistory(id){
+  const all=JSON.parse(localStorage.getItem('hystero_cases')||'[]');
+  const c=all.find(x=>x.id===id);
+  if(!c) return;
+  const al=getAlert(Math.max(0,c.finalDeficit));
+  const startStr=new Date(c.startTime).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  const endStr=new Date(c.endTime).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  const dur=Math.round((new Date(c.endTime)-new Date(c.startTime))/60000);
+  const cpRows=c.checkpoints.map((cp,i)=>{
+    const a=getAlert(Math.max(0,cp.deficit));
+    return `<tr style="background:${i%2===0?'#fff':'#f5f7fa'}">
+      <td style="text-align:center;background:#d6e9f8;font-weight:700;color:#1a6fb5">${cp.no}</td>
+      <td style="text-align:center">${cp.time}</td>
+      <td style="text-align:center">${cp.elapsed}'</td>
+      <td style="text-align:center;color:#1a6fb5;font-weight:600">+${cp.addMedia.toLocaleString()}</td>
+      <td style="text-align:center">${cp.cumMedia.toLocaleString()}</td>
+      <td style="text-align:center;color:#00a86b;font-weight:600">+${cp.addOutput.toLocaleString()}</td>
+      <td style="text-align:center">${cp.cumOutput.toLocaleString()}</td>
+      <td style="text-align:center;font-weight:700;color:${a.color};background:${a.bg}">${cp.deficit.toLocaleString()}</td>
+      <td style="text-align:center;font-weight:700;color:${a.color};background:${a.bg}">${a.label}</td>
+      <td></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('print-area').innerHTML=`
+    <div style="font-family:Arial,sans-serif;color:#111;background:#fff">
+      <div style="background:#0d3b6e;color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div>
+          <div style="font-size:18px;font-weight:700">HYSTEROSCOPY FLUID DEFICIT MONITORING</div>
+          <div style="font-size:9px;color:#a8d0f0;margin-top:2px">NSS Isotonic — AAGL/ESGE Guideline | Hard Stop 2,500 mL</div>
+        </div>
+        <div style="text-align:right;font-size:9px;color:#a8d0f0">
+          <div>พิมพ์: ${new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})}</div>
+          <div>เวลา: ${new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})} น.</div>
+        </div>
+      </div>
+      <div style="border:2px solid ${al.color};border-radius:8px;padding:12px 16px;margin-bottom:10px;background:${al.color}0a">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:#0d3b6e;letter-spacing:.1em;margin-bottom:6px">สรุปผลการติดตาม Fluid Balance</div>
+            <div style="font-size:11px;line-height:1.9;color:#222">
+              <b>ผู้ป่วย:</b> ${c.patient.name||'-'} &nbsp;|&nbsp; <b>HN:</b> ${c.patient.hn||'-'}<br>
+              <b>วันที่:</b> ${c.patient.date||'-'} &nbsp;|&nbsp; <b>เวลาเริ่ม:</b> ${startStr} น. &nbsp;|&nbsp; <b>เวลาสิ้นสุด:</b> ${endStr} น. &nbsp;|&nbsp; <b>รวม:</b> ${dur} นาที<br>
+              <b>แพทย์:</b> ${c.patient.surgeon||'-'} &nbsp;|&nbsp; <b>พยาบาล:</b> ${c.patient.nurse||'-'}<br>
+              <b>Dx:</b> ${c.patient.dx||'-'} &nbsp;|&nbsp; <b>Operation:</b> ${c.patient.operation||'-'}<br>
+              <b>Distension Media:</b> ${c.patient.mediaType||'NSS'} &nbsp;|&nbsp; <b>Hard Stop:</b> 2,500 mL
+            </div>
+          </div>
+          <div style="text-align:center;min-width:130px;border-left:1px solid #ddd;padding-left:16px">
+            <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:4px">FINAL FLUID DEFICIT</div>
+            <div style="font-size:32px;font-weight:900;color:${al.color};line-height:1">${c.finalDeficit.toLocaleString()}</div>
+            <div style="font-size:11px;color:#555">mL</div>
+            <div style="margin-top:6px;background:${al.color};color:#fff;font-size:11px;font-weight:700;padding:3px 12px;border-radius:99px;display:inline-block">${al.label}</div>
+            <div style="margin-top:4px;font-size:9px;color:#777">${c.totalMedia.toLocaleString()} mL intake<br>${c.totalOutput.toLocaleString()} mL output</div>
+          </div>
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:6px;font-size:8.5px">
+        <thead><tr style="background:#0d3b6e;color:#fff">
+          <th style="padding:5px 4px;text-align:center;border:1px solid #c8d4e0">CP</th>
+          <th style="padding:5px 4px;text-align:center;border:1px solid #c8d4e0">เวลา</th>
+          <th style="padding:5px 4px;text-align:center;border:1px solid #c8d4e0">นาที</th>
+          <th style="padding:5px 4px;text-align:center;border:1px solid #c8d4e0">NSS ครั้งนี้</th>
+          <th style="padding:5px 4px;text-align:center;border:1px solid #c8d4e0">Σ NSS</th>
+          <th style="padding:5px 4px;text-align:center;border:1px solid #c8d4e0">Output ครั้งนี้</th>
+          <th style="padding:5px 4px;text-align:center;border:1px solid #c8d4e0">Σ Output</th>
+          <th style="padding:5px 4px;text-align:center;border:1px solid #c8d4e0">Deficit (mL)</th>
+          <th style="padding:5px 4px;text-align:center;border:1px solid #c8d4e0">Status</th>
+          <th style="padding:5px 4px;text-align:center;border:1px solid #c8d4e0">หมายเหตุ</th>
+        </tr></thead>
+        <tbody style="font-size:9px">${cpRows}</tbody>
+      </table>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:8px"><tbody><tr style="background:#eaf4fc">
+        <td style="background:#1a6fb5;color:#fff;font-weight:700;padding:6px 10px;font-size:9px;text-align:center;border:1px solid #c8d4e0;width:12%">SUMMARY</td>
+        <td style="padding:6px 8px;font-size:9px;font-weight:700;color:#0d3b6e;border:1px solid #c8d4e0">Total NSS</td>
+        <td style="padding:6px 8px;font-size:12px;font-weight:700;color:#1a6fb5;border:1px solid #c8d4e0">${c.totalMedia.toLocaleString()} mL</td>
+        <td style="padding:6px 8px;font-size:9px;font-weight:700;color:#0d3b6e;border:1px solid #c8d4e0">Total Output</td>
+        <td style="padding:6px 8px;font-size:12px;font-weight:700;color:#00a86b;border:1px solid #c8d4e0">${c.totalOutput.toLocaleString()} mL</td>
+        <td style="padding:6px 8px;font-size:9px;font-weight:700;color:#0d3b6e;border:1px solid #c8d4e0">Final Deficit</td>
+        <td style="padding:6px 8px;font-size:13px;font-weight:900;color:${al.color};background:${al.color}0a;border:1px solid #c8d4e0">${c.finalDeficit.toLocaleString()} mL — ${al.label}</td>
+      </tr></tbody></table>
+      ${c.notes?`<table style="width:100%;border-collapse:collapse;margin-bottom:8px"><tbody><tr style="background:#f5f7fa"><td style="padding:6px 8px;font-weight:700;color:#0d3b6e;border:1px solid #c8d4e0;width:15%;font-size:9px;vertical-align:top">หมายเหตุ</td><td style="padding:6px 8px;border:1px solid #c8d4e0;font-size:9px">${c.notes}</td></tr></tbody></table>`:''}
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:#444;margin-bottom:8px">
+        <span>ลงชื่อพยาบาลบันทึก ..........................................</span>
+        <span>วันที่ .............. เวลา .............. น.</span>
+        <span>แพทย์รับทราบ ......................................</span>
+      </div>
+      <div style="border-top:.5px solid #c8d4e0;padding-top:3px;display:flex;justify-content:space-between;font-size:7px;color:#aaa">
+        <span>Hysteroscopy Fluid Deficit Monitoring Form | NSS 1,000 mL/ขวด</span>
+        <span>Monitor ทุก 2,000 mL | Hard Stop > 2,500 mL (AAGL/ESGE)</span>
+      </div>
+    </div>`;
+  window.print();
+}
+
 // ── VIEW CASE (popup) ──────────────────────────────────────
 function viewCase(id){
   const all=JSON.parse(localStorage.getItem('hystero_cases')||'[]');
@@ -1148,7 +1246,7 @@ function printCase(){
   const def=state.mediaUsed-state.outputCollected;
   const al=getAlert(Math.max(0,def));
   const startStr=state.startTime?state.startTime.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}):'-';
-  const endStr=state.checkpoints.length>0?state.checkpoints[state.checkpoints.length-1].time:'-';
+  const endStr=state.checkpoints.length>0?state.checkpoints[state.checkpoints.length-1].time:new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
   const cpRows=state.checkpoints.map((cp,i)=>{
     const a=getAlert(Math.max(0,cp.deficit));
     return `<tr style="background:${i%2===0?'#fff':'#f5f7fa'}">
