@@ -246,7 +246,7 @@
       <div id="remaining-card" style="background:#132435;border:1px solid #1e3a52;border-radius:11px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:14px">
         <div style="flex:1">
           <div style="font-size:9px;color:#5a7a90;font-weight:700;letter-spacing:.12em;margin-bottom:4px">⏱ REMAINING ALLOWABLE DEFICIT</div>
-          <div id="s-remaining" style="font-size:24px;font-weight:800;color:#00a86b">2,500 mL</div>
+          <div id="s-remaining2" style="font-size:24px;font-weight:800;color:#00a86b">2,500 mL</div>
           <div style="font-size:9px;color:#5a7a90;margin-top:2px">ก่อนถึง Hard Stop (2,500 mL)</div>
         </div>
         <div style="width:80px">
@@ -291,9 +291,9 @@
               <span id="tap-media-display" style="font-size:18px;font-weight:800;color:#1a9fe8">0 <span style="font-size:11px">mL</span></span>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px">
-              <button onclick="tapMedia(100)" class="tap-btn" style="background:#1a9fe818;border:2px solid #1a9fe844;border-radius:10px;color:#1a9fe8;padding:12px 0;font-size:15px;font-weight:800;cursor:pointer;transition:.15s">+100</button>
-              <button onclick="tapMedia(500)" class="tap-btn" style="background:#1a9fe818;border:2px solid #1a9fe844;border-radius:10px;color:#1a9fe8;padding:12px 0;font-size:15px;font-weight:800;cursor:pointer;transition:.15s">+500</button>
-              <button onclick="tapMedia(1000)" class="tap-btn" style="background:#1a9fe830;border:2px solid #1a9fe866;border-radius:10px;color:#1a9fe8;padding:12px 0;font-size:15px;font-weight:800;cursor:pointer;transition:.15s">+1,000</button>
+              <button onclick="tapMedia(100,this)" class="tap-btn" style="background:#1a9fe818;border:2px solid #1a9fe844;border-radius:10px;color:#1a9fe8;padding:12px 0;font-size:15px;font-weight:800;cursor:pointer;transition:.15s">+100</button>
+              <button onclick="tapMedia(500,this)" class="tap-btn" style="background:#1a9fe818;border:2px solid #1a9fe844;border-radius:10px;color:#1a9fe8;padding:12px 0;font-size:15px;font-weight:800;cursor:pointer;transition:.15s">+500</button>
+              <button onclick="tapMedia(1000,this)" class="tap-btn" style="background:#1a9fe830;border:2px solid #1a9fe866;border-radius:10px;color:#1a9fe8;padding:12px 0;font-size:15px;font-weight:800;cursor:pointer;transition:.15s">+1,000</button>
             </div>
           </div>
 
@@ -304,9 +304,9 @@
               <span id="tap-output-display" style="font-size:18px;font-weight:800;color:#00c48c">0 <span style="font-size:11px">mL</span></span>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px">
-              <button onclick="tapOutput(100)" class="tap-btn" style="background:#00c48c18;border:2px solid #00c48c44;border-radius:10px;color:#00c48c;padding:12px 0;font-size:15px;font-weight:800;cursor:pointer;transition:.15s">+100</button>
-              <button onclick="tapOutput(500)" class="tap-btn" style="background:#00c48c18;border:2px solid #00c48c44;border-radius:10px;color:#00c48c;padding:12px 0;font-size:15px;font-weight:800;cursor:pointer;transition:.15s">+500</button>
-              <button onclick="tapOutput(1000)" class="tap-btn" style="background:#00c48c30;border:2px solid #00c48c66;border-radius:10px;color:#00c48c;padding:12px 0;font-size:15px;font-weight:800;cursor:pointer;transition:.15s">+1,000</button>
+              <button onclick="tapOutput(100,this)" class="tap-btn" style="background:#00c48c18;border:2px solid #00c48c44;border-radius:10px;color:#00c48c;padding:12px 0;font-size:15px;font-weight:800;cursor:pointer;transition:.15s">+100</button>
+              <button onclick="tapOutput(500,this)" class="tap-btn" style="background:#00c48c18;border:2px solid #00c48c44;border-radius:10px;color:#00c48c;padding:12px 0;font-size:15px;font-weight:800;cursor:pointer;transition:.15s">+500</button>
+              <button onclick="tapOutput(1000,this)" class="tap-btn" style="background:#00c48c30;border:2px solid #00c48c66;border-radius:10px;color:#00c48c;padding:12px 0;font-size:15px;font-weight:800;cursor:pointer;transition:.15s">+1,000</button>
             </div>
           </div>
 
@@ -478,14 +478,14 @@ let tapMediaVal = 0;
 let tapOutputVal = 0;
 let isManualMode = false;
 
-function tapMedia(amt){
+function tapMedia(amt,btn){
   tapMediaVal += amt;
-  animateTap(event.currentTarget);
+  if(btn) animateTap(btn);
   updateTapPreview();
 }
-function tapOutput(amt){
+function tapOutput(amt,btn){
   tapOutputVal += amt;
-  animateTap(event.currentTarget);
+  if(btn) animateTap(btn);
   updateTapPreview();
 }
 function animateTap(btn){
@@ -773,10 +773,25 @@ function addCheckpoint(){
     alertLabel: getAlert(Math.max(0,newDef)).label,
   });
   state.mediaUsed=newMedia; state.outputCollected=newOut;
-  document.getElementById('i-media').value='';
-  document.getElementById('i-output').value='';
-  document.getElementById('preview-box').style.display='none';
-  document.getElementById('bottle-count').textContent='= — ขวด';
+  // ── RESET ONE-TAP after save ──
+  tapMediaVal=0; tapOutputVal=0;
+  const _dmd=document.getElementById('tap-media-display');
+  const _dod=document.getElementById('tap-output-display');
+  const _pm=document.getElementById('prev-media');
+  const _po=document.getElementById('prev-output');
+  const _pd=document.getElementById('prev-deficit');
+  const _cb=document.getElementById('confirm-btn');
+  if(_dmd) _dmd.innerHTML='0 <span style="font-size:11px">mL</span>';
+  if(_dod) _dod.innerHTML='0 <span style="font-size:11px">mL</span>';
+  if(_pm) _pm.textContent='0 mL';
+  if(_po) _po.textContent='0 mL';
+  if(_pd){ _pd.textContent='— mL'; _pd.style.color='#5a7a90'; }
+  if(_cb){ _cb.disabled=true; _cb.style.opacity='.5'; }
+  try{ document.getElementById('i-media').value=''; }catch(e){}
+  try{ document.getElementById('i-output').value=''; }catch(e){}
+  try{ document.getElementById('preview-box').style.display='none'; }catch(e){}
+  try{ document.getElementById('bottle-count').textContent='= — ขวด'; }catch(e){}
+  try{ showCpFlash(); }catch(e){}
   updateUI();
 }
 
@@ -818,6 +833,8 @@ function updateUI(){
   const defPct = Math.min(100, Math.round((def/hardStop)*100));
   const remColor = al.color;
   document.getElementById('s-remaining').textContent = remaining.toLocaleString();
+  const r2=document.getElementById('s-remaining2');
+  if(r2){ r2.textContent=remaining.toLocaleString()+' mL'; r2.style.color=remColor; }
   const hsl=document.getElementById('hard-stop-label');
   if(hsl) hsl.textContent='Hard Stop '+hardStop.toLocaleString()+' mL';
   document.getElementById('s-remaining').style.color = remColor;
@@ -923,11 +940,27 @@ function resetCase(){
   const btn=document.getElementById('patient-card').querySelector('button');
   btn.textContent='🏥 เริ่มเคส Hysteroscopy'; btn.onclick=startCase;
   document.getElementById('patient-card').querySelector('button').style.background='linear-gradient(135deg,#1a9fe8,#0d6fbf)';
-  document.getElementById('active-case').style.display='none';
-  document.getElementById('topbar-timer').style.display='none';
-  document.getElementById('i-notes').value='';
-  document.getElementById('cp-history').style.display='none';
-  document.getElementById('cp-tbody').innerHTML='';
+  const ac=document.getElementById('active-case');
+  if(ac) ac.style.cssText='display:none!important';
+  const tt=document.getElementById('topbar-timer');
+  if(tt) tt.style.display='none';
+  const notes=document.getElementById('i-notes');
+  if(notes) notes.value='';
+  const cph=document.getElementById('cp-history');
+  if(cph) cph.style.display='none';
+  const cptb=document.getElementById('cp-tbody');
+  if(cptb) cptb.innerHTML='';
+  const tc=document.getElementById('trend-card');
+  if(tc) tc.style.display='none';
+  // Reset tap state display
+  tapMediaVal=0; tapOutputVal=0;
+  prevAlertLabel='SAFE';
+  const dmd=document.getElementById('tap-media-display');
+  const dod=document.getElementById('tap-output-display');
+  if(dmd) dmd.innerHTML='0 <span style="font-size:11px">mL</span>';
+  if(dod) dod.innerHTML='0 <span style="font-size:11px">mL</span>';
+  // Scroll to top
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
 // ── HISTORY RENDER ─────────────────────────────────────────
